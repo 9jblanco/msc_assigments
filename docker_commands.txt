@@ -1,0 +1,389 @@
+﻿zookeeper-server-start.bat config\zookeeper.properties
+
+kafka-server-start.bat config\server.properties
+
+kafka-topics.bat --topic first_topic --create --partitions 3 --replication-factor 1 --bootstrap-server localhost/127.0.0.1:9092
+kafka-topics.bat --topic second_topic --create --partitions 6 --replication-factor 1 --bootstrap-server localhost/127.0.0.1:9092
+
+kafka-topics --list --bootstrap-server localhost/127.0.0.1:9092
+kafka-topics --topic second_topic --describe --bootstrap-server localhost/127.0.0.1:9092
+
+kafka-topics --topic first_topic --delete --bootstrap-server localhost/127.0.0.1:9092
+kafka-topics --bootstrap-server localhost/127.0.0.1:9092 --topic new_topic --describe
+
+
+kafka-console-producer --bootstrap-server localhost/127.0.0.1:9092 --topic new_topic
+kafka-console-producer --bootstrap-server localhost/127.0.0.1:9092 --topic first_topic --producer-property acks=all
+kafka-console-producer --bootstrap-server localhost/127.0.0.1:9092 --topic new_topic --producer-property acks=all
+
+kafka-console-consumer --bootstrap-server localhost/127.0.0.1:9092 --topic first_topic
+kafka-console-consumer --bootstrap-server localhost/127.0.0.1:9092 --topic first_topic --from-beginning
+kafka-console-consumer --bootstrap-server localhost/127.0.0.1:9092 --topic first_topic --group my-first-application
+kafka-console-consumer --bootstrap-server localhost/127.0.0.1:9092 --topic first_topic --group my-second-application --from-beginning
+
+kafka-consumer-groups --bootstrap-server localhost/127.0.0.1:9092 --list
+kafka-consumer-groups --bootstrap-server localhost/127.0.0.1:9092 --describe --group my-first-application
+kafka-consumer-groups --bootstrap-server localhost/127.0.0.1:9092 --reset-offsets --to-earliest --execute --group my-first-application --topic first_topic
+kafka-consumer-groups --bootstrap-server localhost/127.0.0.1:9092 --reset-offsets --shift-by -2 --execute --group my-first-application --topic first_topic
+
+note: connect broker instance -- > 9092 
+note: connect zookeeper 2181 
+-----
+dapr init
+
+dapr ps 
+---
+
+az login
+az acr login --name DPSDEV-IE
+
+az login --scope https://management.core.windows.net//.default --- 'CONNECT REGITRY' 
+
+az acr login --name FceContainerRegistryDPS --- 'login' 
+
+az acr show --name FceContainerRegistryDPS --query loginServer --output table -- show details 
+
+docker tag webinfrastructureavailability fcecontainerregistrydps.azurecr.io/webinfrastructureavailability:v1
+
+docker push fcecontainerregistrydps.azurecr.io/webinfrastructureavailability:v1
+
+az acr repository list --name FceContainerRegistryDPS --output table
+
+az container create --name atg-aio-webapi-infrastuctureavailability \
+    --resource-group FCE-DEV-DPS-rg \
+    --image fcecontainerregistrydps.azurecr.io/webinfrastructureavailability:v1 \
+    --registry-login-server fcecontainerregistrydps.azurecr.io \
+    --registry-username FceContainerRegistryDPS \
+    --registry-password 04Fetmrnp7wMgxatPjtIqkfOz8tSM=Eh \
+    --dns-name-label infrastructureavailability \
+	--cpu 1
+	--memory 1.5
+	--location westus
+	--query ipAddress.fqdn
+	
+az container create --name atg-aio-webapi-infrastuctureavailability --resource-group FCE-DEV-DPS-rg --image fcecontainerregistrydps.azurecr.io/webinfrastructureavailability:v1 --registry-login-server fcecontainerregistrydps.azurecr.io --registry-username FceContainerRegistryDPS --registry-password 04Fetmrnp7wMgxatPjtIqkfOz8tSM=Eh --dns-name-label infrastructureavailability -query ipAddress.fqdn --cpu 1 --zone westus2
+
+
+docker tag allinone_prototype:v1 dpsdevie.azurecr.io/allinone_prototype
+docker push dpsdevie.azurecr.io/allinone_prototype
+
+az acr repository list --name DPSDEVIE --output table
+az acr show --name DPSDEVIE --query loginServer       // REGISTRY FULL PATH
+
+// containers 
+az container create --resource-group DPSDEV-IE --name allinone-container --image dpsdevie.azurecr.io/allinone_prototype --cpu 1 --memory 1 --registry-login-server dpsdevie.azurecr.io --registry-username DPSDEVIE --registry-password DWvB25A+O8W8T=4l7I=/Ma/IzA=PVQV/ --dns-name-label prototype --ports 80
+
+az container show --resource-group DPSDEV-IE --name allinone-container --query instanceView.state
+
+az container show --resource-group DPSDEV-IE --name allinone-container --query ipAddress.fqdn
+
+az container logs --resource-group DPSDEV-IE --name allinone-container
+
+
+docker image inspect []
+
+docker build -f Dockerfile -t dps_api:v1 .
+docker run -it --rm -p 8080:5000 --name dps_api_container dps_api:v1
+
+curl http://localhost:5000/swagger/index.html
+
+curl http://localhost:8080/swagger/index.html
+
+curl https://allinone.intel.com/ReleaseNotes/GetLatestVersion -k
+
+docker run -d=false -p 5000:80 --name dps_api_container dps_api:v1
+docker run -it --rm -p 5000:80 --name dps_api_container dps_api:v1
+
+docker build -f Dockerfile -t allinone_prototype:v1 ..
+
+docker build -f Dockerfile -t DPS.API:v1 ..
+
+docker run -d -p 8080:80 --name myapp allinone_prototype:v1
+docker run -it --rm -p 5000:80 --name allinone_prototypecontainer allinone_prototype:v1
+
+docker run --pid=container:allinone_prototypecontainer --net=container:allinone_prototypecontainer -d  kalise/topz /server --addr=0.0.0.0:8080
+
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' allinone_prototypecontainer
+
+docker build -t mymicroservice .   -- create a new image 
+
+docker images                      -- list images
+\myMicroservice>docker run -it --rm -p 3000:80 --name mymicroservicecontainer mymicroservice
+
+docker run -it --rm -p 3000:80 --name mymicroservicecontainer mymicroservice -- run the app in a container 
+
+docker port mymicroservice -- mapped port 
+
+docker inspect --format '{{ .NetworkSettings.IPAddress }}' 3dc44cccf529
+
+docker container run -it mymicroservice sh
+
+docker container exec -it 07bc4e088fea sh or ls -l
+docker container exec -it 598 sh
+
+  --->ps -elf                  -----ctrl+p+q - exit without killing it 
+
+run - d ---> detached - it -----> integrated 
+
+docker ps -- running containers 
+
+
+docker login -- login
+
+docker tag mymicroservice 9jblanco/mymicroservice
+docker puch 9jblanco/mymicroservice
+
+docker ps -a // list of the current instances 
+docker images
+
+docker pull alpine ---
+
+docker ps
+
+docker node ls 
+
+ctrl p+q - exit 
+
+docker stop $(docker ps - aq)
+docker rm $(docker ps - aq)
+docker rmi $(docker images -q)
+docker container kill $(docker ps -q)
+
+docker image pull redis 
+docker system info 
+docker image ls --digests 
+docker history redis 
+
+docker image inspect redis 
+
+ --- docker loggign ---
+
+ /AppData/Local/Docker 
+
+ --log-driver --log-opts 
+
+ --- swarm  ---- 
+
+ docker swarm init --advertise-addr 192.168.65.3:2377 --listen-addr 192.168.65.3:2377 --autolock=true
+ docker swarm update --autolock=true
+ docker swarm unlock 
+ docker swarm update --cert-expiry 48h
+
+ ->  docker swarm join --token SWMTKN-1-0jhjy0805fe5agcn0tey9ibmeotdmdn13gmdt0ivfgo6w1w6dl-0cxt3cv4yu8wyzn1jdrzmco1f 192.168.65.3:2377
+ ->  
+ -> 
+ -> docker swarm join-token worker
+ -> docker swarm join-token --rotate manager
+
+ --
+
+ docker volume create 
+ docker volume inspect myvol
+
+ docker container run -dit --name voltest --mount source=ubervol,target=/vol alpine:latest
+
+ docker container exec -it voltest sh
+
+ docker container run -dit --name volmore --mount source=ubervol,target=/app nginx:latest
+
+ --
+
+ docker secret create wp-sec-v1 .\classified.txt
+
+ docker secret inspect wp-sec-v1
+
+ --
+
+ docker network create -o encrypted  ----- 
+ docker network ls 
+ docker network inspect bridge 
+
+ docker port mymicroservice
+
+ docker network create -d bridge golden-gate
+
+ docker network create -d overlay overnet 
+
+ --
+
+ docker openssl x509 -in /var/lib/docker/swarm/certificates/swarm-node.crt - text
+
+ docker node ls 
+
+ --
+
+ docker service ps pinger --- 
+
+ docker service create -d --name ping --replicas 3 --network overnet alpine sleep 1d 
+
+  docker service create -d --name pong --replicas 3 --network overnet alpine sleep 1d 
+
+
+ docker service create --name [ps1] --network []  -p 8080:8080 --replicas 5 ....
+          
+ docker service update --image [] --update-parallelism 2 -- update-delay 10s [] 
+
+ docker service ls 
+
+ docker service scale [name]=7
+
+ docker service inspect --pretty [name]
+
+ docker node ps ..
+
+ docker node promote 
+
+ docker network create -d overlay ps-net  // create a network for the new service 
+
+ sudo docker network ls
+
+ docker-compose bundle
+
+ docker stack deploy [name]
+
+ docker stack tasks []
+
+ docker service inspect []
+
+ docker service ps demo == docker service ls
+
+ routing mesh --
+
+ -- reacap --
+
+ docker swarm init     ...
+ docker swarm join     ...
+ docker service create ...
+ docker service scale  ...
+ docker service update ...
+ docker stack deploy   ... 
+ 
+ docker sbom 
+
+------- AZURE -------
+
+
+az group create --name myMicroserviceResources --location ukwest                                    ---- create a resource group
+
+az aks create --resource-group myMicroserviceResources --name myMicroserviceCluster --node-count 3 --enable-addons http_application_routing --generate-ssh-keys
+
+az aks get-credentials --resource-group myMicroserviceResources --name myMicroserviceCluster        ---- get the connection details 
+
+
+----
+ * - > setup the echo . > deploy-myMicroservice.yaml  < - *
+----
+
+kubectl create -f redis-shards.yaml
+
+kubectl get service mymicroservice --watch
+
+
+kubectl scale --replicas=2 deployment/mymicroservice
+
+
+--- 
+
+mg1  20.43.58.195
+ssh -i .\mg1_key.pem azureuser@20.43.58.195
+
+mg2  20.43.61.113
+ssh -i .\mg2_key.pem azureuser@20.43.61.113
+
+wrk1 51.103.50.170
+ssh -i .\wrk1_key.pem azureuser@51.103.50.170
+
+wrk2 51.103.25.242
+ssh -i .\wrk2_key.pem azureuser@51.103.25.242
+
+---
+
+   docker build -t mymicroservice:v2 . 
+   docker tag mymicroservice:v5 9jblanco/mymicroservice:v5
+   docker push 9jblanco/mymicroservice:v5
+
+   sudo docker swarm join --token SWMTKN-1-2or9tq5ybey6jwsmepc09vd9rmf3xy6di6wv1lx23qm2co7gbb-1d225vc5tddun0krduo2o52d4 10.0.2.6:2377 // worker 
+        docker swarm join --token SWMTKN-1-2or9tq5ybey6jwsmepc09vd9rmf3xy6di6wv1lx23qm2co7gbb-a3xhi19huq17mr95gg987bmci 10.0.2.6:2377 // manager
+		               --advertise-addr [ip manager 2...*]:2377 
+					   --listen-addr    [ip manager 2...*]:2377 
+
+		docker network create -d overlay ps-net  
+
+   sudo	docker service create --name demo --network ps-net -p 3000:80 --replicas 5 9jblanco/mymicroservice:latest
+   
+   sudo docker service update --image 9jblanco/mymicroservice:v5 --update-parallelism 2 --update-delay 10s demo
+
+   docker service ls 
+
+   sudo docker service ps demo
+
+   sudo docker service inspect --pretty demo
+
+   sudo docker service scale demo=10
+
+   sudo docker service logs demo
+
+   sudo docker service update --image [] --update-parallelism 2 -- update-delay 10s [] 
+
+   --- stack dabs --
+
+   docker-compose build
+
+   docker tag example-voting-app-master_worker 9jblanco/example-voting-app-master_worker
+   docker tag example-voting-app-master_result 9jblanco/example-voting-app-master_resul
+   docker tag example-voting-app-master_vote 9jblanco/example-voting-app-master_vote
+
+   docker push 9jblanco/example-voting-app-master_worker
+   docker push 9jblanco/example-voting-app-master_result
+   docker push 9jblanco/example-voting-app-master_vote
+
+
+   docker tag example-voting-app-master_result 9jblanco/example-voting-app-master_resul
+   ...
+   ...
+
+   docker stack deploy --compose-file docker-compose-dab.yml-{ ref images } sample_app_docker
+
+   docker stack rm ..
+
+   sudo docker stack 
+
+   
+>>>>  curl -v http://localhost:3000/weatherforecast <<<<
+
+
+ >>> https://docs.docker.com/engine/install/ubuntu/  <<<
+
+---
+
+-- Masre --
+
+apiserver = yaml or json  ( mainifest file - pods )
+
+-- Node --minion --
+
+kubelet :10255 'port' --- /spec /healthz /pods 
+
+Container Engine = Docker / Rocket 
+
+kube-proxy
+replicator controller 
+
+// 
+minikube start --vm-driver=hyperv
+
+kubectl get nodes 
+kubectl get pods 
+kubectl create / apply -f pod.yml
+kubectl apply --filename=deploy.yml --record=true 
+kubectl describe pods
+kubectl get ep 
+kubectl get rs ---replica 
+kubectl run
+kubectl delete rc hello-rc
+kubectl describe svc hello-svc
+kubectl describe rs
+kubectl rollout status deployment hello-deploy 
+kubectl get deploy hello-deploy 
+kubectl rollout history deployment  hello-deploy 
+kubectl rollout undo deployment hello-deploy  --to-revision=1
